@@ -31,10 +31,16 @@ const SERVER_URL = `http://${LOCAL_IP}:${PORT}`;
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Quiz Storage Directory
-const QUIZ_DIR = path.join(__dirname, 'public', 'data', 'quizzes');
+// Quiz Storage Directory (Supports Vercel Read-Only File System Fallback)
+const QUIZ_DIR = process.env.VERCEL ? path.join('/tmp', 'quizzes') : path.join(__dirname, 'public', 'data', 'quizzes');
+const BUNDLED_QUIZ_DIR = path.join(__dirname, 'public', 'data', 'quizzes');
+
 if (!fs.existsSync(QUIZ_DIR)) {
-    fs.mkdirSync(QUIZ_DIR, { recursive: true });
+    try {
+        fs.mkdirSync(QUIZ_DIR, { recursive: true });
+    } catch (e) {
+        console.error('Error creating QUIZ_DIR:', e);
+    }
 }
 
 // Ensure default sample quizzes exist in repository
@@ -204,7 +210,15 @@ io.on('connection', (socket) => {
     // Host creates a room with quiz data
     socket.on('host_create_room', async ({ quizData }) => {
         const roomCode = generateRoomCode();
-        const playerJoinUrl = `${SERVER_URL}/player.html?pin=${roomCode}`;
+        
+        let currentBaseUrl = SERVER_URL;
+        if (socket.handshake && socket.handshake.headers && socket.handshake.headers.host) {
+            const host = socket.handshake.headers.host;
+            const proto = socket.handshake.headers['x-forwarded-proto'] || 'http';
+            currentBaseUrl = `${proto}://${host}`;
+        }
+
+        const playerJoinUrl = `${currentBaseUrl}/player.html?pin=${roomCode}`;
         const qrDataUrl = await QRCode.toDataURL(playerJoinUrl, { margin: 2, width: 250 });
 
         rooms[roomCode] = {
@@ -226,7 +240,7 @@ io.on('connection', (socket) => {
 
         socket.emit('room_created', {
             roomCode,
-            serverUrl: SERVER_URL,
+            serverUrl: currentBaseUrl,
             playerJoinUrl,
             qrDataUrl,
             quizTitle: quizData.title,
@@ -620,11 +634,20 @@ function getTopPlayers(room, limit = 5) {
         }));
 }
 
-// Start HTTP Server
-server.listen(PORT, () => {
-    console.log(`===================================================`);
-    console.log(`🚀 KADARK KAHOOT-STYLE QUIZ SERVER RUNNING`);
-    console.log(`📡 Local Network Access URL: ${SERVER_URL}`);
-    console.log(`📱 Scan QR Code or open ${SERVER_URL}/player.html on mobile`);
-    console.log(`===================================================`);
-});
+// Export Server Handler for Vercel Serverless & Local Node Execution
+module.exports = (req, res) => {
+    server.emit('request', req, res);
+};
+module.exports.app = app;
+module.exports.server = server;
+
+if (require.main === module) {
+    // Start HTTP Server for local development
+    server.listen(PORT, '0.0.0.0', () => {
+        console.log(`===================================================`);
+        console.log(`🚀 KADARK KAHOOT-STYLE QUIZ SERVER RUNNING`);
+        console.log(`📡 Local Network Access URL: ${SERVER_URL}`);
+        console.log(`📱 Scan QR Code or open ${SERVER_URL}/player.html on mobile`);
+        console.log(`===================================================`);
+    });
+}

@@ -1,5 +1,8 @@
 // Host Client Logic
-const socket = io();
+const socket = io({
+    transports: ['polling', 'websocket'],
+    upgrade: true
+});
 
 let currentRoomCode = null;
 let currentQuiz = null;
