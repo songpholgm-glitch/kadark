@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kadark Quiz - Quiz Editor & Manager</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <div class="logo" onclick="location.href='index.html'">
+            ⚡ KADARK QUIZ BUILDER
+        </div>
+        <div>
+            <a href="host.html" class="btn btn-primary">📺 เปิดหน้าจอ Host</a>
+            <a href="index.html" class="btn btn-outline">🏠 หน้าหลัก</a>
+        </div>
+    </header>
+
+    <main class="hero-container" style="text-align: left; max-width: 1000px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <div>
+                <h1 style="font-size: 2.2rem;">📝 จัดการชุดคำถาม (Quiz Builder)</h1>
+                <p style="color: var(--text-muted);">สร้าง แก้ไข หรือส่งออกไฟล์ข้อสอบของคุณเองได้ไม่จำกัดข้อ</p>
+            </div>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button class="btn btn-success" onclick="createNewQuiz()">✨ สร้างชุดคำถามใหม่ (New Quiz)</button>
+                <button class="btn btn-primary" onclick="saveQuizToServer()">💾 บันทึกลงเซิร์ฟเวอร์</button>
+                <button class="btn btn-outline" onclick="openRepoModal()">🌐 คลังคำถามเซิร์ฟเวอร์</button>
+                <button class="btn btn-outline" onclick="exportQuizJSON()">📥 Export JSON</button>
+                <button class="btn btn-outline" onclick="triggerImportJSON()">📤 Import JSON</button>
+                <input type="file" id="fileInputJSON" accept=".json" style="display: none;" onchange="importQuizJSON(event)">
+            </div>
+        </div>
+
+        <!-- Quiz Details Card -->
+        <div class="glass-panel" style="padding: 1.8rem; margin-bottom: 2rem;">
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-bottom: 1rem;">
+                <div>
+                    <label class="form-label" style="font-size: 1.1rem; color: #e2e8f0;">📌 ชื่อชุดคำถาม (Quiz Title)</label>
+                    <input type="text" id="quizTitle" class="form-input" style="background: rgba(0,0,0,0.3);" value="ควิซความรู้ทั่วไปของฉัน">
+                </div>
+                <div>
+                    <label class="form-label" style="font-size: 1.1rem; color: #e2e8f0;">📊 จำนวนคำถามทั้งหมด</label>
+                    <div style="font-size: 1.8rem; font-weight: 800; color: #ff7eb3; margin-top: 6px;">
+                        <span id="questionCountBadge">0</span> ข้อ
+                    </div>
+                </div>
+            </div>
+            <div>
+                <label class="form-label" style="font-size: 1rem; color: #e2e8f0;">📝 คำอธิบายชุดคำถาม (Description)</label>
+                <input type="text" id="quizDesc" class="form-input" style="background: rgba(0,0,0,0.3);" placeholder="ใส่คำอธิบายเกี่ยวกับชุดคำถามนี้...">
+            </div>
+        </div>
+
+        <!-- Question List -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h2 style="font-size: 1.5rem;">รายการคำถามทั้งหมด</h2>
+            <button class="btn btn-success" onclick="openQuestionModal()">➕ เพิ่มคำถามใหม่</button>
+        </div>
+
+        <div id="questionsContainer" style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 3rem;">
+            <!-- Questions rendered here -->
+        </div>
+    </main>
+
+    <!-- Modal Form for Add/Edit Question -->
+    <div id="modalBackdrop" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); z-index: 1000; align-items: center; justify-content: center;">
+        <div class="glass-panel" style="max-width: 650px; width: 90%; padding: 2rem; max-height: 90vh; overflow-y: auto;">
+            <h2 id="modalTitle" style="margin-bottom: 1.5rem;">➕ เพิ่มคำถามใหม่</h2>
+
+            <form id="questionForm" onsubmit="saveQuestion(event)">
+                <input type="hidden" id="editIndex" value="-1">
+
+                <div class="form-group" style="margin-bottom: 1.2rem;">
+                    <label class="form-label">❓ โจทย์คำถาม (Question)</label>
+                    <textarea id="modalQText" class="form-input" rows="3" required placeholder="ใส่คำถามที่นี่..."></textarea>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1.2rem;">
+                    <label class="form-label">⏱️ เวลาตอบ (วินาที)</label>
+                    <select id="modalQTime" class="form-input" style="background: #1a1f38;">
+                        <option value="10">10 วินาที</option>
+                        <option value="15">15 วินาที</option>
+                        <option value="20" selected>20 วินาที</option>
+                        <option value="30">30 วินาที</option>
+                        <option value="60">60 วินาที</option>
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1.2rem;">
+                    <label class="form-label">🎨 ตัวเลือกคำตอบ (4 ตัวเลือก) & เลือกข้อที่ถูกต้อง</label>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <input type="radio" name="correctChoice" value="0" checked style="width: 22px; height: 22px;">
+                            <input type="text" id="opt0" class="form-input" style="background: rgba(226, 27, 60, 0.2);" placeholder="ตัวเลือก 1 (▲ สีแดง)" required>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <input type="radio" name="correctChoice" value="1" style="width: 22px; height: 22px;">
+                            <input type="text" id="opt1" class="form-input" style="background: rgba(19, 104, 206, 0.2);" placeholder="ตัวเลือก 2 (◆ สีน้ำเงิน)" required>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <input type="radio" name="correctChoice" value="2" style="width: 22px; height: 22px;">
+                            <input type="text" id="opt2" class="form-input" style="background: rgba(216, 158, 0, 0.2);" placeholder="ตัวเลือก 3 (● สีเหลือง)" required>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <input type="radio" name="correctChoice" value="3" style="width: 22px; height: 22px;">
+                            <input type="text" id="opt3" class="form-input" style="background: rgba(38, 137, 12, 0.2);" placeholder="ตัวเลือก 4 (■ สีเขียว)" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 2rem;">
+                    <button type="button" class="btn btn-outline" onclick="closeQuestionModal()">ยกเลิก</button>
+                    <button type="submit" class="btn btn-primary">💾 บันทึกคำถาม</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal for Server Quiz Repository -->
+    <div id="repoModalBackdrop" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); z-index: 1000; align-items: center; justify-content: center;">
+        <div class="glass-panel" style="max-width: 750px; width: 90%; padding: 2rem; max-height: 85vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h2>🌐 คลังชุดคำถามบนเซิร์ฟเวอร์ (Server Repository)</h2>
+                <button class="btn btn-outline" style="padding: 6px 14px;" onclick="closeRepoModal()">✕ ปิด</button>
+            </div>
+            <p style="color: var(--text-muted); margin-bottom: 1.5rem;">เลือกชุดคำถามที่ต้องการดึงมาแก้ไข หรือสร้างต่อยอด</p>
+
+            <div id="repoQuizList" style="display: flex; flex-direction: column; gap: 12px;">
+                <!-- Server quizzes populated here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="js/editor.js"></script>
+</body>
+</html>

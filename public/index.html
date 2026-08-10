@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kadark Quiz - ระบบควิซตอบคำถามเรียลไทม์</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            ⚡ KADARK QUIZ <span class="logo-badge">LIVE</span>
+        </div>
+        <nav style="display: flex; gap: 15px;">
+            <a href="editor.html" class="btn btn-outline">⚙️ คลังข้อสอบ / สร้างควิซ</a>
+        </nav>
+    </header>
+
+    <main class="hero-container">
+        <h1 class="hero-title">ควิซตอบคำถามเรียลไทม์<br><span style="background: linear-gradient(135deg, #FFD700, #E040FB); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">สนุก รวดเร็ว สแกน QR เข้าเล่นได้ทันที!</span></h1>
+        <p class="hero-subtitle">รองรับผู้เล่นไม่จำกัด คิดคะแนนตามความเร็ว เลือก Avatar การ์ตูนน่ารัก 20 ตัวละคร และเฉลยพร้อมแจ้งคะแนน Top 5 ทุกข้อ</p>
+
+        <div class="cards-grid">
+            <!-- Mode 1: Host Screen -->
+            <div class="glass-panel mode-card" onclick="location.href='host.html'">
+                <div>
+                    <div class="mode-icon" style="color: #ff7eb3;">📺</div>
+                    <h2 style="font-size: 1.8rem; margin-bottom: 1rem;">เปิดหน้าจอ Host (สร้างเกม)</h2>
+                    <p style="color: var(--text-muted); line-height: 1.5;">สำหรับฉายขึ้นโปรเจกเตอร์หรือหน้าจอใหญ่ แสดง QR Code ให้ผู้เล่นสแกนเข้าห้อง เฉลยคำตอบ และตาราง Top 5</p>
+                </div>
+                <button class="btn btn-primary btn-lg" style="width: 100%; margin-top: 2rem;">เริ่มสร้างห้องแข่งขัน 🚀</button>
+            </div>
+
+            <!-- Mode 2: Player Screen -->
+            <div class="glass-panel mode-card" onclick="location.href='player.html'">
+                <div>
+                    <div class="mode-icon" style="color: #43e97b;">📱</div>
+                    <h2 style="font-size: 1.8rem; margin-bottom: 1rem;">เข้าร่วมเล่นเกม (มือถือ)</h2>
+                    <p style="color: var(--text-muted); line-height: 1.5;">สำหรับผู้เล่นที่ต้องการเข้าร่วมผ่านรหัส PIN ตั้งชื่อ และเลือก Avatar 20 ตัวละครสุดน่ารัก</p>
+                </div>
+                <button class="btn btn-success btn-lg" style="width: 100%; margin-top: 2rem;">เข้าสู่หน้าผู้เล่น 🎮</button>
+            </div>
+
+            <!-- Mode 3: Quiz Editor -->
+            <div class="glass-panel mode-card" onclick="location.href='editor.html'">
+                <div>
+                    <div class="mode-icon" style="color: #ffe000;">📝</div>
+                    <h2 style="font-size: 1.8rem; margin-bottom: 1rem;">จัดการชุดคำถาม (Quiz Editor)</h2>
+                    <p style="color: var(--text-muted); line-height: 1.5;">สร้างชุดคำถามใหม่ ปรับแต่งตัวเลือก ตั้งเวลาตอบ และส่งออก/นำเข้าไฟล์ข้อสอบ JSON</p>
+                </div>
+                <button class="btn btn-outline btn-lg" style="width: 100%; margin-top: 2rem;">สร้างและจัดการควิซ ⚙️</button>
+            </div>
+        </div>
+    </main>
+
+    <footer style="text-align: center; padding: 2rem; color: var(--text-muted); font-size: 0.95rem;">
+        Kadark Real-time Interactive Quiz Platform &bull; Speed-Based Scoring System
+    </footer>
+</body>
+</html>

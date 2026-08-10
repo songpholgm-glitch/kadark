@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Kadark Quiz - Player</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/player.css">
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="js/avatars.js"></script>
+</head>
+<body class="player-body">
+    <!-- Top Player Header Bar (Hidden until joined) -->
+    <header id="playerHeaderBar" class="player-header" style="display: none;">
+        <div class="player-info-tag">
+            <div id="headerAvatarContainer"></div>
+            <div class="player-name-text" id="headerPlayerName">Player</div>
+        </div>
+        <div class="player-score-badge">
+            <span id="headerPlayerScore">0</span> pts
+        </div>
+    </header>
+
+    <!-- 1. JOIN FORM SCREEN -->
+    <div id="screenJoin" class="join-container">
+        <div class="join-card">
+            <h1 style="font-size: 2.2rem; margin-bottom: 0.5rem; background: linear-gradient(135deg, #FFD700, #E040FB); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                🎮 KADARK QUIZ
+            </h1>
+            <p style="color: var(--text-muted); margin-bottom: 1.5rem;">กรอกชื่อและเลือกตัวละครของคุณเพื่อเริ่มความสนุก!</p>
+
+            <form id="joinForm" onsubmit="handleJoin(event)">
+                <div class="form-group">
+                    <label class="form-label" for="inputPin">🔑 รหัสห้อง (PIN Code)</label>
+                    <input type="number" id="inputPin" class="form-input" placeholder="เช่น 123456" required autocomplete="off">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="inputName">👤 ชื่อผู้เล่น (Display Name)</label>
+                    <input type="text" id="inputName" class="form-input" placeholder="ใส่ชื่อของคุณ" maxlength="15" required autocomplete="off">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">🎨 เลือกตัวละคร Avatar (20 แบบ)</label>
+                    <div id="avatarPickerGrid" class="avatar-grid">
+                        <!-- Avatars populated dynamically -->
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-lg" style="width: 100%; border-radius: 18px;">
+                    🚀 เข้าร่วมเกม (Join Game)
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 2. WAITING LOBBY SCREEN -->
+    <div id="screenWaiting" class="waiting-box" style="display: none;">
+        <div id="waitingAvatarBox" style="margin-bottom: 1rem;"></div>
+        <h2 style="font-size: 2.2rem; margin-bottom: 0.5rem;">คุณได้เข้าร่วมห้องแล้ว! 🎉</h2>
+        <p style="font-size: 1.2rem; color: var(--text-muted); margin-bottom: 2rem;">
+            โปรดมองที่หน้าจอหลัก (Host)...<br>รอ Host กดเริ่มเกม
+        </p>
+        <div class="waiting-spinner"></div>
+    </div>
+
+    <!-- 2.5 GET READY WARM-UP SCREEN -->
+    <div id="screenPlayerGetReady" class="waiting-box" style="display: none; padding: 2rem 1rem;">
+        <div style="background: rgba(255, 215, 0, 0.15); border: 1px solid #FFD700; padding: 6px 18px; border-radius: 14px; color: #FFD700; font-weight: 700; font-size: 1.1rem; display: inline-block; margin-bottom: 1rem;">
+            ⚡ ข้อที่ <span id="mobileReadyQNum">1</span> / <span id="mobileReadyQTotal">10</span>
+        </div>
+        <h2 id="mobileReadyQText" style="font-size: 1.6rem; font-weight: 700; color: #ffffff; line-height: 1.4; margin-bottom: 1.5rem; word-break: break-word;">
+            ...
+        </h2>
+        <p style="font-size: 1.1rem; color: var(--text-muted); margin-bottom: 0.5rem;">คำถามกำลังจะเปิดให้ตอบใน...</p>
+        <div id="mobileReadyCountNum" style="font-size: 5rem; font-weight: 800; font-family: 'Outfit', sans-serif; color: #FFD700; animation: pulse 0.8s infinite alternate;">
+            3
+        </div>
+    </div>
+
+    <!-- 3. QUESTION ANSWER BUTTONS SCREEN -->
+    <div id="screenAnswer" style="display: none; flex: 1; flex-direction: column; justify-content: space-between;">
+        <div class="glass-panel" style="text-align: center; margin-bottom: 1rem; padding: 1.2rem 1rem; border-radius: 20px; background: rgba(35, 14, 64, 0.95);">
+            <div style="font-size: 1rem; color: #FFD700; font-weight: 700; margin-bottom: 6px;">
+                คำถามข้อที่ <span id="mobileQNum">1</span>
+            </div>
+            <h2 id="mobileQPreview" style="font-size: 1.4rem; font-weight: 700; color: white; line-height: 1.35; margin: 0; word-break: break-word;">
+                ...
+            </h2>
+        </div>
+
+        <div class="mobile-answers-grid">
+            <button class="mobile-answer-btn btn-red" onclick="sendAnswer(0)">
+                <span class="btn-shape-icon">▲</span>
+                <span id="btnText0" class="btn-text-preview">ตัวเลือก 1</span>
+            </button>
+            <button class="mobile-answer-btn btn-blue" onclick="sendAnswer(1)">
+                <span class="btn-shape-icon">◆</span>
+                <span id="btnText1" class="btn-text-preview">ตัวเลือก 2</span>
+            </button>
+            <button class="mobile-answer-btn btn-yellow" onclick="sendAnswer(2)">
+                <span class="btn-shape-icon">●</span>
+                <span id="btnText2" class="btn-text-preview">ตัวเลือก 3</span>
+            </button>
+            <button class="mobile-answer-btn btn-green" onclick="sendAnswer(3)">
+                <span class="btn-shape-icon">■</span>
+                <span id="btnText3" class="btn-text-preview">ตัวเลือก 4</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- 4. ANSWER RECEIVED WAITING SCREEN -->
+    <div id="screenAnsweredWaiting" class="waiting-box" style="display: none;">
+        <div style="font-size: 4rem; margin-bottom: 1rem;">👍</div>
+        <h2 style="font-size: 2.2rem; margin-bottom: 0.5rem;">ส่งคำตอบเรียบร้อย!</h2>
+        <p style="font-size: 1.2rem; color: var(--text-muted);">
+            กำลังรอผู้เล่นคนอื่นๆ ตอบคำถาม...
+        </p>
+    </div>
+
+    <!-- 5. ANSWER FEEDBACK RESULT SCREEN -->
+    <div id="screenFeedback" class="feedback-screen" style="display: none;">
+        <div id="feedbackIcon" class="feedback-icon">🎯</div>
+        <h2 id="feedbackTitle" class="feedback-title">ถูกต้อง!</h2>
+        <div id="feedbackDetail">...</div>
+        <div id="feedbackPts" class="feedback-pts">+0 pts</div>
+        <div id="streakBadge" style="margin-top: 1rem; font-size: 1.1rem; font-weight: 700; color: #ffeb3b; display: none;">
+            🔥 ตอบถูกต่อเนื่อง: <span id="streakNum">0</span> ข้อ!
+        </div>
+    </div>
+
+    <!-- 6. LEADERBOARD & FINAL RANK SCREEN -->
+    <div id="screenPlayerLeaderboard" class="waiting-box" style="display: none;">
+        <div id="mobileFinalRankBadge" style="background: linear-gradient(135deg, #FFD700, #FF8F00); color: #120726; padding: 10px 24px; border-radius: 20px; font-size: 1.3rem; font-weight: 800; margin-bottom: 1.5rem; box-shadow: 0 10px 25px rgba(255, 215, 0, 0.4);">
+            🏆 อันดับที่ <span id="mobileRankNum">-</span> (จาก <span id="mobileTotalPlayersNum">-</span> คน)
+        </div>
+        <div id="mobileFinalAvatarBox" style="margin-bottom: 1rem;"></div>
+        <h2 id="mobileFinalTitle" style="font-size: 2rem; margin-bottom: 0.5rem;">สรุปผลคะแนนของคุณ</h2>
+        
+        <div style="background: rgba(255,255,255,0.08); padding: 1.2rem 2.5rem; border-radius: 20px; border: 1px solid rgba(255,215,0,0.3); margin-bottom: 1.5rem; width: 100%; max-width: 320px;">
+            <div style="font-size: 1rem; color: var(--text-muted);">คะแนนรวมทั้งหมด</div>
+            <div id="mobileTotalScore" style="font-size: 3rem; font-weight: 800; color: #FFD700; font-family: 'Outfit', sans-serif;">0</div>
+        </div>
+        <p id="mobileFinalSubtext" style="color: var(--text-muted); font-size: 1.05rem;">มองที่หน้าจอ Host เพื่อดูอันดับของทุกคนบนหน้าจอใหญ่!</p>
+    </div>
+
+    <script src="js/player.js"></script>
+</body>
+</html>

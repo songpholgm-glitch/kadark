@@ -1,0 +1,56 @@
+{
+  "id": "quiz-sample-02",
+  "title": "💻 ไอทีและเทคโนโลยีสุดไฮเทค",
+  "description": "ทายคำถามโลกไอที ภาษาคอมพิวเตอร์ และเทคโนโลยีสุดล้ำ",
+  "createdAt": "2026-08-10T03:15:37.613Z",
+  "questions": [
+    {
+      "id": "t1",
+      "question": "ภาษาโปรแกรมมิ่งใดมีโลโก้เป็นรูปงูหลาม?",
+      "options": [
+        "Java",
+        "Python",
+        "C++",
+        "JavaScript"
+      ],
+      "correctIndex": 1,
+      "timeLimit": 15
+    },
+    {
+      "id": "t2",
+      "question": "HTML ย่อมาจากคำว่าอะไร?",
+      "options": [
+        "HyperText Markup Language",
+        "High Tech Machine Language",
+        "HyperTransfer Mode Logic",
+        "Home Tool Markup List"
+      ],
+      "correctIndex": 0,
+      "timeLimit": 20
+    },
+    {
+      "id": "t3",
+      "question": "ใครคือผู้ก่อตั้งบริษัท Microsoft?",
+      "options": [
+        "Steve Jobs",
+        "Bill Gates",
+        "Mark Zuckerberg",
+        "Elon Musk"
+      ],
+      "correctIndex": 1,
+      "timeLimit": 15
+    },
+    {
+      "id": "t4",
+      "question": "1 Gigabyte (GB) เท่ากับกี่ Megabyte (MB)?",
+      "options": [
+        "500 MB",
+        "1000 MB",
+        "1024 MB",
+        "2048 MB"
+      ],
+      "correctIndex": 2,
+      "timeLimit": 20
+    }
+  ]
+}

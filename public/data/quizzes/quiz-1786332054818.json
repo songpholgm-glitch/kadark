@@ -1,0 +1,21 @@
+{
+  "id": "quiz-1786332054818",
+  "title": "test",
+  "description": "test",
+  "createdAt": "2026-08-10T03:20:54.818Z",
+  "questions": [
+    {
+      "id": "q-1786332105754",
+      "question": "มาทำไม",
+      "options": [
+        "ไม่รู้",
+        "มาแล้ว",
+        "หรอ",
+        "แย่จัง"
+      ],
+      "correctIndex": 2,
+      "timeLimit": 20
+    }
+  ],
+  "updatedAt": "2026-08-10T03:22:08.569Z"
+}

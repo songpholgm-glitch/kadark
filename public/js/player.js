@@ -1,0 +1,263 @@
+// Player Client Logic
+const socket = io();
+
+let selectedAvatarId = 'cat';
+let myPlayerData = null;
+let currentQuestionTime = 0;
+let answerSubmitted = false;
+
+// DOM Elements
+const screenJoin = document.getElementById('screenJoin');
+const screenWaiting = document.getElementById('screenWaiting');
+const screenPlayerGetReady = document.getElementById('screenPlayerGetReady');
+const screenAnswer = document.getElementById('screenAnswer');
+const screenAnsweredWaiting = document.getElementById('screenAnsweredWaiting');
+const screenFeedback = document.getElementById('screenFeedback');
+const screenPlayerLeaderboard = document.getElementById('screenPlayerLeaderboard');
+
+let playerReadyTimer = null;
+
+function showPlayerScreen(screenElem) {
+    [screenJoin, screenWaiting, screenPlayerGetReady, screenAnswer, screenAnsweredWaiting, screenFeedback, screenPlayerLeaderboard].forEach(s => {
+        if (s) {
+            s.style.display = (s === screenElem) ? (screenElem === screenAnswer ? 'flex' : 'block') : 'none';
+        }
+    });
+}
+
+// Auto-fill PIN code if in URL parameter ?pin=123456
+window.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const pinParam = urlParams.get('pin');
+    if (pinParam) {
+        document.getElementById('inputPin').value = pinParam;
+    }
+
+    renderAvatarPicker();
+});
+
+// Render 20 Cute Avatars in Selection Grid
+function renderAvatarPicker() {
+    const grid = document.getElementById('avatarPickerGrid');
+    grid.innerHTML = '';
+
+    AVATARS.forEach((av) => {
+        const item = document.createElement('div');
+        item.className = `avatar-option ${av.id === selectedAvatarId ? 'selected' : ''}`;
+        item.onclick = () => selectAvatar(av.id, item);
+
+        item.innerHTML = `
+            ${getAvatarSVG(av.id, 45)}
+            <span class="avatar-option-name">${av.name}</span>
+        `;
+
+        grid.appendChild(item);
+    });
+}
+
+function selectAvatar(avatarId, element) {
+    selectedAvatarId = avatarId;
+    document.querySelectorAll('.avatar-option').forEach(el => el.classList.remove('selected'));
+    element.classList.add('selected');
+}
+
+// Handle Form Submit to Join Game
+function handleJoin(e) {
+    e.preventDefault();
+    const pin = document.getElementById('inputPin').value.trim();
+    const name = document.getElementById('inputName').value.trim();
+
+    if (!pin || !name) {
+        alert('กรุณากรอกรหัสห้องและชื่อของคุณให้ครบถ้วน');
+        return;
+    }
+
+    socket.emit('player_join', {
+        roomCode: pin,
+        nickname: name,
+        avatarId: selectedAvatarId
+    });
+}
+
+// Socket Response: Join Success
+socket.on('join_success', ({ roomCode, player }) => {
+    myPlayerData = player;
+
+    // Update Header Bar
+    document.getElementById('playerHeaderBar').style.display = 'flex';
+    document.getElementById('headerAvatarContainer').innerHTML = getAvatarSVG(player.avatarId, 36);
+    document.getElementById('headerPlayerName').innerText = player.nickname;
+    document.getElementById('headerPlayerScore').innerText = player.score;
+
+    // Update Waiting Lobby Avatar
+    document.getElementById('waitingAvatarBox').innerHTML = getAvatarSVG(player.avatarId, 90);
+
+    showPlayerScreen(screenWaiting);
+});
+
+// Socket Response: Join Error
+socket.on('join_error', (msg) => {
+    alert(msg);
+});
+
+// 3-Second Prepare Warm-up Countdown for Mobile
+socket.on('prepare_question', (data) => {
+    document.getElementById('mobileReadyQNum').innerText = data.questionIndex;
+    const totalElem = document.getElementById('mobileReadyQTotal');
+    if (totalElem) totalElem.innerText = data.totalQuestions;
+
+    const qTextElem = document.getElementById('mobileReadyQText');
+    if (qTextElem) qTextElem.innerText = data.question || 'คำถามข้อถัดไป...';
+
+    let count = data.getReadySeconds || 3;
+    const numElem = document.getElementById('mobileReadyCountNum');
+    numElem.innerText = count;
+
+    clearInterval(playerReadyTimer);
+    playerReadyTimer = setInterval(() => {
+        count--;
+        if (count > 0) {
+            numElem.innerText = count;
+        } else {
+            numElem.innerText = '🔥';
+            clearInterval(playerReadyTimer);
+        }
+    }, 1000);
+
+    showPlayerScreen(screenPlayerGetReady);
+});
+
+// Synchronized Start Question from Server
+socket.on('start_question', (data) => {
+    clearInterval(playerReadyTimer);
+    answerSubmitted = false;
+    document.getElementById('mobileQNum').innerText = `${data.questionIndex} / ${data.totalQuestions}`;
+    document.getElementById('mobileQPreview').innerText = data.question;
+
+    for (let i = 0; i < 4; i++) {
+        const btn = document.querySelector(`.mobile-answer-btn:nth-child(${i + 1})`);
+        const btnText = document.getElementById(`btnText${i}`);
+        if (data.options[i]) {
+            btn.style.display = 'flex';
+            btnText.innerText = data.options[i];
+        } else {
+            btn.style.display = 'none';
+        }
+    }
+
+    showPlayerScreen(screenAnswer);
+});
+
+// Send Answer Choice
+function sendAnswer(optionIndex) {
+    if (answerSubmitted) return;
+    answerSubmitted = true;
+
+    socket.emit('player_submit_answer', { optionIndex });
+    showPlayerScreen(screenAnsweredWaiting);
+}
+
+// Answer Acknowledged by Server
+socket.on('answer_received', (data) => {
+    showPlayerScreen(screenAnsweredWaiting);
+});
+
+// Server Reveals Result for Player
+socket.on('question_result', (data) => {
+    const feedbackScreen = document.getElementById('feedbackScreen');
+    const title = document.getElementById('feedbackTitle');
+    const icon = document.getElementById('feedbackIcon');
+    const detail = document.getElementById('feedbackDetail');
+    const pts = document.getElementById('feedbackPts');
+    const streakBadge = document.getElementById('streakBadge');
+    const streakNum = document.getElementById('streakNum');
+
+    // Update score badge in header
+    document.getElementById('headerPlayerScore').innerText = data.totalScore;
+    document.getElementById('mobileTotalScore').innerText = data.totalScore;
+
+    const shapeIcons = ['▲', '◆', '●', '■'];
+    const correctShape = shapeIcons[data.correctIndex] || '✅';
+    const correctBoxHtml = `
+        <div style="background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.2); padding: 12px 18px; border-radius: 16px; margin: 12px 0; text-align: center;">
+            <div style="font-size: 0.95rem; opacity: 0.85; margin-bottom: 4px;">🎯 คำตอบที่ถูกต้องคือ:</div>
+            <div style="font-size: 1.4rem; font-weight: 800; color: #ffe000;">
+                ${correctShape} ${escapeHtml(data.correctOptionText)}
+            </div>
+        </div>
+    `;
+
+    if (data.isCorrect) {
+        feedbackScreen.className = 'feedback-screen correct';
+        icon.innerText = '🎉';
+        title.innerText = 'ตอบถูกต้อง!';
+        detail.innerHTML = correctBoxHtml;
+        pts.innerText = `+${data.pointsEarned} pts`;
+
+        if (data.streak > 1) {
+            streakBadge.style.display = 'block';
+            streakNum.innerText = data.streak;
+        } else {
+            streakBadge.style.display = 'none';
+        }
+    } else {
+        feedbackScreen.className = 'feedback-screen wrong';
+        icon.innerText = '❌';
+        title.innerText = data.answered ? 'ตอบไม่ถูกต้อง!' : 'หมดเวลาตอบ!';
+        detail.innerHTML = correctBoxHtml;
+        pts.innerText = '+0 pts';
+        streakBadge.style.display = 'none';
+    }
+
+    showPlayerScreen(feedbackScreen);
+});
+
+// Leaderboard Sync Update
+socket.on('leaderboard_update', (data) => {
+    showPlayerScreen(screenPlayerLeaderboard);
+});
+
+// Personal Final Result from Server
+socket.on('player_final_result', (data) => {
+    document.getElementById('mobileRankNum').innerText = data.rank;
+    document.getElementById('mobileTotalPlayersNum').innerText = data.totalPlayers;
+    document.getElementById('mobileTotalScore').innerText = data.score.toLocaleString();
+    document.getElementById('mobileFinalAvatarBox').innerHTML = getAvatarSVG(data.avatarId, 90);
+
+    const titleElem = document.getElementById('mobileFinalTitle');
+    const badgeElem = document.getElementById('mobileFinalRankBadge');
+
+    if (data.rank === 1) {
+        badgeElem.style.background = 'linear-gradient(135deg, #ffd700, #ff8c00)';
+        titleElem.innerText = '🥇 คุณคือผู้ชนะเลิศ!';
+    } else if (data.rank <= 3) {
+        badgeElem.style.background = 'linear-gradient(135deg, #c0c0c0, #708090)';
+        titleElem.innerText = `🏅 คุณติด Top 3 (อันดับที่ ${data.rank})!`;
+    } else if (data.rank <= 5) {
+        badgeElem.style.background = 'linear-gradient(135deg, #f093fb, #f5576c)';
+        titleElem.innerText = `🎉 คุณติด Top 5 (อันดับที่ ${data.rank})!`;
+    } else {
+        badgeElem.style.background = 'linear-gradient(135deg, #667eea, #764ba2)';
+        titleElem.innerText = `👏 ขอบคุณที่ร่วมแข่งขัน!`;
+    }
+
+    showPlayerScreen(screenPlayerLeaderboard);
+});
+
+// Game Finished Sync
+socket.on('game_finished', (data) => {
+    showPlayerScreen(screenPlayerLeaderboard);
+});
+
+// Room Closed
+socket.on('room_closed', (msg) => {
+    alert(msg);
+    location.href = 'index.html';
+});
+
+function escapeHtml(text) {
+    if (!text) return '';
+    return text.replace(/[&<>"']/g, function(m) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
+    });
+}
