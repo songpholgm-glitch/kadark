@@ -1,0 +1,21 @@
+{
+  "id": "quiz-1786354115792",
+  "title": "ชุดคำถามใหม่ของฉัน",
+  "description": "สร้างโดยระบบ Kadark Quiz Builder",
+  "createdAt": "2026-08-10T09:28:35.792Z",
+  "questions": [
+    {
+      "id": "q-1786354143282",
+      "question": "test",
+      "options": [
+        "1",
+        "2",
+        "3",
+        "4"
+      ],
+      "correctIndex": 0,
+      "timeLimit": 20
+    }
+  ],
+  "updatedAt": "2026-08-10T09:29:05.060Z"
+}
