@@ -281,13 +281,29 @@ io.on('connection', (socket) => {
         if (!room || room.hostSocketId !== socket.id) return;
 
         room.state = 'LEADERBOARD';
-        const leaderboard = getTopPlayers(room, 5);
+        const allRankings = getTopPlayers(room, Object.keys(room.players).length);
+        const leaderboard = allRankings.slice(0, 5);
 
         io.to(roomCode).emit('leaderboard_update', {
             questionIndex: room.currentQuestionIndex + 1,
             totalQuestions: room.quiz.questions.length,
             top5: leaderboard,
             isFinal: room.currentQuestionIndex >= room.quiz.questions.length - 1
+        });
+
+        // Send current rank & score to each individual mobile player
+        allRankings.forEach((p) => {
+            const pSocket = io.sockets.sockets.get(p.socketId);
+            if (pSocket) {
+                pSocket.emit('player_rank_update', {
+                    rank: p.rank,
+                    totalPlayers: allRankings.length,
+                    score: p.score,
+                    nickname: p.nickname,
+                    avatarId: p.avatarId,
+                    isFinal: false
+                });
+            }
         });
     });
 
@@ -312,16 +328,17 @@ io.on('connection', (socket) => {
                 totalPlayers: finalRankings.length
             });
 
-            // Send personal final rank to each mobile player
+            // Send personal final rank to each mobile player (isFinal: true)
             finalRankings.forEach((p) => {
                 const pSocket = io.sockets.sockets.get(p.socketId);
                 if (pSocket) {
-                    pSocket.emit('player_final_result', {
+                    pSocket.emit('player_rank_update', {
                         rank: p.rank,
                         totalPlayers: finalRankings.length,
                         score: p.score,
                         nickname: p.nickname,
-                        avatarId: p.avatarId
+                        avatarId: p.avatarId,
+                        isFinal: true
                     });
                 }
             });

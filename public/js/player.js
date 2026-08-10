@@ -167,7 +167,7 @@ socket.on('answer_received', (data) => {
 
 // Server Reveals Result for Player
 socket.on('question_result', (data) => {
-    const feedbackScreen = document.getElementById('feedbackScreen');
+    const feedbackScreen = document.getElementById('screenFeedback');
     const title = document.getElementById('feedbackTitle');
     const icon = document.getElementById('feedbackIcon');
     const detail = document.getElementById('feedbackDetail');
@@ -176,16 +176,20 @@ socket.on('question_result', (data) => {
     const streakNum = document.getElementById('streakNum');
 
     // Update score badge in header
-    document.getElementById('headerPlayerScore').innerText = data.totalScore;
-    document.getElementById('mobileTotalScore').innerText = data.totalScore;
+    document.getElementById('headerPlayerScore').innerText = data.totalScore.toLocaleString();
+    document.getElementById('mobileTotalScore').innerText = data.totalScore.toLocaleString();
 
     const shapeIcons = ['▲', '◆', '●', '■'];
+    const shapeColors = ['#ff5252', '#448aff', '#ffd700', '#69f0ae'];
     const correctShape = shapeIcons[data.correctIndex] || '✅';
+    const correctColor = shapeColors[data.correctIndex] || '#FFD700';
+
     const correctBoxHtml = `
-        <div style="background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.2); padding: 12px 18px; border-radius: 16px; margin: 12px 0; text-align: center;">
-            <div style="font-size: 0.95rem; opacity: 0.85; margin-bottom: 4px;">🎯 คำตอบที่ถูกต้องคือ:</div>
-            <div style="font-size: 1.4rem; font-weight: 800; color: #ffe000;">
-                ${correctShape} ${escapeHtml(data.correctOptionText)}
+        <div style="background: rgba(0,0,0,0.4); border: 1px solid rgba(255,215,0,0.35); padding: 14px 20px; border-radius: 20px; margin: 14px 0; text-align: center; box-shadow: inset 0 2px 10px rgba(0,0,0,0.4);">
+            <div style="font-size: 0.95rem; color: #d1c4e9; font-weight: 600; margin-bottom: 6px;">🎯 คำตอบที่ถูกต้องคือ:</div>
+            <div style="font-size: 1.35rem; font-weight: 800; color: #ffffff; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                <span style="color: ${correctColor}; font-size: 1.8rem; filter: drop-shadow(0 2px 8px ${correctColor});">${correctShape}</span>
+                <span>${escapeHtml(data.correctOptionText)}</span>
             </div>
         </div>
     `;
@@ -195,10 +199,10 @@ socket.on('question_result', (data) => {
         icon.innerText = '🎉';
         title.innerText = 'ตอบถูกต้อง!';
         detail.innerHTML = correctBoxHtml;
-        pts.innerText = `+${data.pointsEarned} pts`;
+        pts.innerText = `+${data.pointsEarned.toLocaleString()} pts`;
 
         if (data.streak > 1) {
-            streakBadge.style.display = 'block';
+            streakBadge.style.display = 'inline-block';
             streakNum.innerText = data.streak;
         } else {
             streakBadge.style.display = 'none';
@@ -220,8 +224,8 @@ socket.on('leaderboard_update', (data) => {
     showPlayerScreen(screenPlayerLeaderboard);
 });
 
-// Personal Final Result from Server
-socket.on('player_final_result', (data) => {
+// Personal Rank Update from Server (Handles both intermediate leaderboard and final game finish)
+function handlePlayerRankUpdate(data) {
     document.getElementById('mobileRankNum').innerText = data.rank;
     document.getElementById('mobileTotalPlayersNum').innerText = data.totalPlayers;
     document.getElementById('mobileTotalScore').innerText = data.score.toLocaleString();
@@ -229,28 +233,36 @@ socket.on('player_final_result', (data) => {
 
     const titleElem = document.getElementById('mobileFinalTitle');
     const badgeElem = document.getElementById('mobileFinalRankBadge');
+    const subtextElem = document.getElementById('mobileFinalSubtext');
 
-    if (data.rank === 1) {
-        badgeElem.style.background = 'linear-gradient(135deg, #ffd700, #ff8c00)';
-        titleElem.innerText = '🥇 คุณคือผู้ชนะเลิศ!';
-    } else if (data.rank <= 3) {
-        badgeElem.style.background = 'linear-gradient(135deg, #c0c0c0, #708090)';
-        titleElem.innerText = `🏅 คุณติด Top 3 (อันดับที่ ${data.rank})!`;
-    } else if (data.rank <= 5) {
-        badgeElem.style.background = 'linear-gradient(135deg, #f093fb, #f5576c)';
-        titleElem.innerText = `🎉 คุณติด Top 5 (อันดับที่ ${data.rank})!`;
+    if (data.isFinal) {
+        // Game Finished -> Show Congratulatory Title & Custom Badges
+        if (data.rank === 1) {
+            badgeElem.style.background = 'linear-gradient(135deg, #ffd700, #ff8c00)';
+            titleElem.innerText = '🥇 ยินดีด้วย! คุณคือผู้ชนะเลิศ!';
+        } else if (data.rank <= 3) {
+            badgeElem.style.background = 'linear-gradient(135deg, #c0c0c0, #708090)';
+            titleElem.innerText = `🏅 ยินดีด้วย! คุณติด Top 3 (อันดับที่ ${data.rank})!`;
+        } else if (data.rank <= 5) {
+            badgeElem.style.background = 'linear-gradient(135deg, #f093fb, #f5576c)';
+            titleElem.innerText = `🎉 ยินดีด้วย! คุณติด Top 5 (อันดับที่ ${data.rank})!`;
+        } else {
+            badgeElem.style.background = 'linear-gradient(135deg, #667eea, #764ba2)';
+            titleElem.innerText = `👏 ขอบคุณที่ร่วมแข่งขัน!`;
+        }
+        if (subtextElem) subtextElem.innerText = 'การแข่งขันจบลงแล้ว ขอบคุณผู้ร่วมสนุกทุกคน!';
     } else {
-        badgeElem.style.background = 'linear-gradient(135deg, #667eea, #764ba2)';
-        titleElem.innerText = `👏 ขอบคุณที่ร่วมแข่งขัน!`;
+        // Intermediate Leaderboard during game -> Clean score & rank update, NO congratulatory messages
+        badgeElem.style.background = 'linear-gradient(135deg, #7B1FA2, #5B067C)';
+        titleElem.innerText = '📊 อันดับและคะแนนปัจจุบัน';
+        if (subtextElem) subtextElem.innerText = 'โปรดมองที่หน้าจอหลัก (Host) เพื่อดูอันดับของทุกคนบนหน้าจอใหญ่!';
     }
 
     showPlayerScreen(screenPlayerLeaderboard);
-});
+}
 
-// Game Finished Sync
-socket.on('game_finished', (data) => {
-    showPlayerScreen(screenPlayerLeaderboard);
-});
+socket.on('player_rank_update', handlePlayerRankUpdate);
+socket.on('player_final_result', handlePlayerRankUpdate);
 
 // Room Closed
 socket.on('room_closed', (msg) => {

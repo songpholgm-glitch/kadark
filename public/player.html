@@ -111,8 +111,8 @@
 
     <!-- 4. ANSWER RECEIVED WAITING SCREEN -->
     <div id="screenAnsweredWaiting" class="waiting-box" style="display: none;">
-        <div style="font-size: 4rem; margin-bottom: 1rem;">👍</div>
-        <h2 style="font-size: 2.2rem; margin-bottom: 0.5rem;">ส่งคำตอบเรียบร้อย!</h2>
+        <div style="font-size: 4.5rem; margin-bottom: 1rem; animation: pulse 1s infinite alternate;">👍</div>
+        <h2 style="font-size: 2.2rem; margin-bottom: 0.5rem; color: #FFD700;">ส่งคำตอบเรียบร้อย!</h2>
         <p style="font-size: 1.2rem; color: var(--text-muted);">
             กำลังรอผู้เล่นคนอื่นๆ ตอบคำถาม...
         </p>
@@ -120,28 +120,34 @@
 
     <!-- 5. ANSWER FEEDBACK RESULT SCREEN -->
     <div id="screenFeedback" class="feedback-screen" style="display: none;">
-        <div id="feedbackIcon" class="feedback-icon">🎯</div>
-        <h2 id="feedbackTitle" class="feedback-title">ถูกต้อง!</h2>
-        <div id="feedbackDetail">...</div>
-        <div id="feedbackPts" class="feedback-pts">+0 pts</div>
-        <div id="streakBadge" style="margin-top: 1rem; font-size: 1.1rem; font-weight: 700; color: #ffeb3b; display: none;">
-            🔥 ตอบถูกต่อเนื่อง: <span id="streakNum">0</span> ข้อ!
+        <div id="feedbackIcon" class="feedback-icon">🎉</div>
+        <h2 id="feedbackTitle" class="feedback-title">ตอบถูกต้อง!</h2>
+        
+        <div id="feedbackPts" class="feedback-pts">+1,000 pts</div>
+
+        <div id="streakBadge" class="streak-badge-chip" style="display: none;">
+            🔥 ตอบถูกต่อเนื่อง <span id="streakNum">0</span> ข้อ!
         </div>
+
+        <div id="feedbackDetail" style="width: 100%;">...</div>
     </div>
 
     <!-- 6. LEADERBOARD & FINAL RANK SCREEN -->
-    <div id="screenPlayerLeaderboard" class="waiting-box" style="display: none;">
-        <div id="mobileFinalRankBadge" style="background: linear-gradient(135deg, #FFD700, #FF8F00); color: #120726; padding: 10px 24px; border-radius: 20px; font-size: 1.3rem; font-weight: 800; margin-bottom: 1.5rem; box-shadow: 0 10px 25px rgba(255, 215, 0, 0.4);">
-            🏆 อันดับที่ <span id="mobileRankNum">-</span> (จาก <span id="mobileTotalPlayersNum">-</span> คน)
+    <div id="screenPlayerLeaderboard" class="player-rank-screen" style="display: none;">
+        <div id="mobileFinalAvatarBox" class="player-avatar-rank-frame"></div>
+
+        <div id="mobileFinalRankBadge" class="rank-status-badge">
+            🏆 อันดับที่ <span id="mobileRankNum">-</span> <span style="font-weight: 500; font-size: 1rem; opacity: 0.85;">(จาก <span id="mobileTotalPlayersNum">-</span> คน)</span>
         </div>
-        <div id="mobileFinalAvatarBox" style="margin-bottom: 1rem;"></div>
-        <h2 id="mobileFinalTitle" style="font-size: 2rem; margin-bottom: 0.5rem;">สรุปผลคะแนนของคุณ</h2>
-        
-        <div style="background: rgba(255,255,255,0.08); padding: 1.2rem 2.5rem; border-radius: 20px; border: 1px solid rgba(255,215,0,0.3); margin-bottom: 1.5rem; width: 100%; max-width: 320px;">
-            <div style="font-size: 1rem; color: var(--text-muted);">คะแนนรวมทั้งหมด</div>
-            <div id="mobileTotalScore" style="font-size: 3rem; font-weight: 800; color: #FFD700; font-family: 'Outfit', sans-serif;">0</div>
+
+        <h2 id="mobileFinalTitle" class="rank-screen-title">📊 อันดับและคะแนนปัจจุบัน</h2>
+
+        <div class="score-summary-card">
+            <div class="score-card-label">⭐ คะแนนสะสมรวม</div>
+            <div id="mobileTotalScore" class="score-card-number">0</div>
         </div>
-        <p id="mobileFinalSubtext" style="color: var(--text-muted); font-size: 1.05rem;">มองที่หน้าจอ Host เพื่อดูอันดับของทุกคนบนหน้าจอใหญ่!</p>
+
+        <p id="mobileFinalSubtext" class="rank-screen-subtext">โปรดมองที่หน้าจอหลัก (Host) เพื่อดูอันดับของทุกคนบนหน้าจอใหญ่!</p>
     </div>
 
     <script src="js/player.js"></script>
