@@ -5,10 +5,10 @@ const path = require('path');
 require('dotenv').config();
 
 const dbConfig = {
-    user: process.env.DB_USER || 'quizkadark',
-    password: process.env.DB_PASSWORD || 'quizkadark',
-    server: process.env.DB_SERVER || 'c2webdb.pea.co.th',
-    port: parseInt(process.env.DB_PORT || '59156', 10),
+    user: process.env.DB_USER || 'sa',
+    password: process.env.DB_PASSWORD || '',
+    server: process.env.DB_SERVER || 'localhost',
+    port: parseInt(process.env.DB_PORT || '1433', 10),
     database: process.env.DB_NAME || 'quizkadark',
     options: {
         encrypt: false, // Internal PEA Network
