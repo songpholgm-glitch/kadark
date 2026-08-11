@@ -32,9 +32,8 @@ const SERVER_URL = `http://${LOCAL_IP}:${PORT}`;
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Quiz Storage Directory (Supports Vercel Read-Only File System Fallback)
-const QUIZ_DIR = process.env.VERCEL ? path.join('/tmp', 'quizzes') : path.join(__dirname, 'public', 'data', 'quizzes');
-const BUNDLED_QUIZ_DIR = path.join(__dirname, 'public', 'data', 'quizzes');
+// Quiz Storage Directory
+const QUIZ_DIR = path.join(__dirname, 'public', 'data', 'quizzes');
 
 if (!fs.existsSync(QUIZ_DIR)) {
     try {
@@ -43,51 +42,6 @@ if (!fs.existsSync(QUIZ_DIR)) {
         console.error('Error creating QUIZ_DIR:', e);
     }
 }
-
-// Ensure default sample quizzes exist in repository
-function ensureDefaultQuizzes() {
-    const sampleFiles = [
-        {
-            filename: 'quiz-sample-01.json',
-            data: {
-                id: 'quiz-sample-01',
-                title: '🎉 ความรู้รอบตัว & การ์ตูนสุดสนุก',
-                description: 'คำถามรอบตัวตลกๆ ฮาๆ และความรู้ทั่วไป สำหรับทดสอบความไว',
-                createdAt: new Date().toISOString(),
-                questions: [
-                    { id: 'q1', question: 'สัตว์ชนิดใดที่มีหัวใจอยู่ที่หัว?', options: ['กุ้ง', 'ปลาหมึก', 'ปู', 'หอยเชลล์'], correctIndex: 0, timeLimit: 20 },
-                    { id: 'q2', question: "ประเทศใดขึ้นชื่อว่าเป็น 'ดินแดนแห่งอาทิตย์อุทัย'?", options: ['เกาหลีใต้', 'ญี่ปุ่น', 'จีน', 'เวียดนาม'], correctIndex: 1, timeLimit: 15 },
-                    { id: 'q3', question: 'โดราเอมอน แมวไร้หู กลัวสัตว์ชนิดใดมากที่สุด?', options: ['แมวตัวอื่น', 'สุนัข', 'หนู', 'แมลงสาบ'], correctIndex: 2, timeLimit: 15 },
-                    { id: 'q4', question: "ดาวเคราะห์ดวงใดในระบบสุริยะได้ชื่อว่าเป็น 'ดาวเคราะห์แดง'?", options: ['ดาวพุธ', 'ดาวศุกร์', 'ดาวเสาร์', 'ดาวอังคาร'], correctIndex: 3, timeLimit: 20 },
-                    { id: 'q5', question: 'ผลไม้ชนิดใดต่อไปนี้มีปริมาณวิตามินซีสูงที่สุด?', options: ['ฝรั่ง', 'ส้ม', 'มะนาว', 'แอปเปิ้ล'], correctIndex: 0, timeLimit: 20 }
-                ]
-            }
-        },
-        {
-            filename: 'quiz-sample-02.json',
-            data: {
-                id: 'quiz-sample-02',
-                title: '💻 ไอทีและเทคโนโลยีสุดไฮเทค',
-                description: 'ทายคำถามโลกไอที ภาษาคอมพิวเตอร์ และเทคโนโลยีสุดล้ำ',
-                createdAt: new Date().toISOString(),
-                questions: [
-                    { id: 't1', question: 'ภาษาโปรแกรมมิ่งใดมีโลโก้เป็นรูปงูหลาม?', options: ['Java', 'Python', 'C++', 'JavaScript'], correctIndex: 1, timeLimit: 15 },
-                    { id: 't2', question: 'HTML ย่อมาจากคำว่าอะไร?', options: ['HyperText Markup Language', 'High Tech Machine Language', 'HyperTransfer Mode Logic', 'Home Tool Markup List'], correctIndex: 0, timeLimit: 20 },
-                    { id: 't3', question: 'ใครคือผู้ก่อตั้งบริษัท Microsoft?', options: ['Steve Jobs', 'Bill Gates', 'Mark Zuckerberg', 'Elon Musk'], correctIndex: 1, timeLimit: 15 },
-                    { id: 't4', question: '1 Gigabyte (GB) เท่ากับกี่ Megabyte (MB)?', options: ['500 MB', '1000 MB', '1024 MB', '2048 MB'], correctIndex: 2, timeLimit: 20 }
-                ]
-            }
-        }
-    ];
-
-    sampleFiles.forEach(s => {
-        const filePath = path.join(QUIZ_DIR, s.filename);
-        if (!fs.existsSync(filePath)) {
-            fs.writeFileSync(filePath, JSON.stringify(s.data, null, 2), 'utf8');
-        }
-    });
-}
-ensureDefaultQuizzes();
 
 // QUIZ REPOSITORY API ENDPOINTS
 
@@ -687,37 +641,13 @@ function getTopPlayers(room, limit = 5) {
         }));
 }
 
-// Export Server Handler for Vercel Serverless & Local Node Execution
-module.exports = (req, res) => {
-    server.emit('request', req, res);
-};
-module.exports.app = app;
-module.exports.server = server;
+// Initialize MS SQL Server Database & Start HTTP Server
+db.initDatabase();
 
-if (require.main === module) {
-    // Initialize MS SQL Server Database
-    db.initDatabase().then((connected) => {
-        if (connected) {
-            // Sync default sample quizzes to DB if connected
-            const sampleFiles = ['quiz-sample-01.json', 'quiz-sample-02.json'];
-            sampleFiles.forEach(async (f) => {
-                const p = path.join(QUIZ_DIR, f);
-                if (fs.existsSync(p)) {
-                    try {
-                        const content = JSON.parse(fs.readFileSync(p, 'utf8'));
-                        await db.saveQuiz(content);
-                    } catch (e) {}
-                }
-            });
-        }
-    });
-
-    // Start HTTP Server for local development
-    server.listen(PORT, '0.0.0.0', () => {
-        console.log(`===================================================`);
-        console.log(`🚀 KadArk Kahoot-Style Quiz Server Running`);
-        console.log(`📡 Local Network Access URL: ${SERVER_URL}`);
-        console.log(`📱 Scan QR Code or open ${SERVER_URL}/player.html on mobile`);
-        console.log(`===================================================`);
-    });
-}
+server.listen(PORT, '0.0.0.0', () => {
+    console.log(`===================================================`);
+    console.log(`🚀 KadArk Kahoot-Style Quiz Server Running`);
+    console.log(`📡 Local Network Access URL: ${SERVER_URL}`);
+    console.log(`📱 Scan QR Code or open ${SERVER_URL}/player.html on mobile`);
+    console.log(`===================================================`);
+});

@@ -61,22 +61,6 @@ DB_NAME=quizkadark
 
 ---
 
-## ⚡ การ Deploy ขึ้น Vercel (Vercel Deployment)
-
-โปรเจกต์นี้ได้รับการกำหนดโครงสร้าง **`vercel.json`** และ Serverless Export ไว้อย่างสมบูรณ์แบบเรียบร้อยแล้ว:
-
-1. **Deploy ผ่าน Vercel CLI**:
-   ```bash
-   npm i -g vercel
-   vercel
-   ```
-2. **หรือ Import ผ่าน Vercel Dashboard**:
-   - นำโปรเจกต์ขึ้น **GitHub** แล้วกด **Import Project** บนหน้าเว็บ [Vercel.com](https://vercel.com)
-   - Vercel จะตรวจพบ `vercel.json` และรัน Build ให้อัตโนมัติทันที
-   - ระบบจะสร้าง URL HTTPS (เช่น `https://your-app.vercel.app`) พร้อม QR Code สแกนเข้าเล่นผ่านอินเทอร์เน็ตได้ทันที!
-
----
-
 ## 🛠️ โครงสร้างโปรเจกต์ (Project Structure)
 
 ```

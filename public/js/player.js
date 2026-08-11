@@ -1,8 +1,5 @@
 // Player Client Logic
-const socket = io({
-    transports: ['polling', 'websocket'],
-    upgrade: true
-});
+const socket = io();
 
 let selectedAvatarId = 'cat';
 let myPlayerData = null;
