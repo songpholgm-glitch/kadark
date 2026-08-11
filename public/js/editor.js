@@ -2,8 +2,8 @@
 
 let currentQuizData = {
     id: 'custom-quiz-' + Date.now(),
-    title: 'ชุดคำถามของฉัน',
-    description: 'สร้างโดยระบบ Kadark Quiz Builder',
+    title: 'ควิซความรู้ทั่วไปของฉัน',
+    description: 'สร้างโดยระบบ KadArk Quiz Builder',
     questions: []
 };
 
@@ -45,7 +45,7 @@ function resetToBlankQuiz() {
     currentQuizData = {
         id: 'quiz-' + Date.now(),
         title: 'ชุดคำถามใหม่ของฉัน',
-        description: 'สร้างโดยระบบ Kadark Quiz Builder',
+        description: 'สร้างโดยระบบ KadArk Quiz Builder',
         createdAt: new Date().toISOString(),
         questions: []
     };

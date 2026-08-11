@@ -1,0 +1,21 @@
+{
+  "id": "quiz-1786411990412",
+  "title": "ชุดคำถามใหม่ของฉัน",
+  "description": "สร้างโดยระบบ KadArk Quiz Builder",
+  "createdAt": "2026-08-11T01:33:10.412Z",
+  "questions": [
+    {
+      "id": "q-1786412017241",
+      "question": "ปลามีกี่สี",
+      "options": [
+        "ขาว",
+        "แดง",
+        "เขียว",
+        "มีหลายสี"
+      ],
+      "correctIndex": 0,
+      "timeLimit": 20
+    }
+  ],
+  "updatedAt": "2026-08-11T01:33:50.623Z"
+}

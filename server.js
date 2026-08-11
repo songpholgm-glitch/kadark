@@ -5,6 +5,7 @@ const os = require('os');
 const path = require('path');
 const fs = require('fs');
 const QRCode = require('qrcode');
+const db = require('./db');
 
 const app = express();
 const server = http.createServer(app);
@@ -91,8 +92,24 @@ ensureDefaultQuizzes();
 // QUIZ REPOSITORY API ENDPOINTS
 
 // Get list of all available quizzes in repository
-app.get('/api/quizzes', (req, res) => {
+app.get('/api/quizzes', async (req, res) => {
     try {
+        // Try reading from MS SQL Server DB first
+        if (db.isDbConnected()) {
+            const dbQuizzes = await db.getAllQuizzes();
+            if (dbQuizzes && dbQuizzes.length > 0) {
+                const list = dbQuizzes.map(q => ({
+                    id: q.id,
+                    title: q.title,
+                    description: q.description,
+                    questionCount: q.questions ? q.questions.length : 0,
+                    createdAt: q.createdAt
+                }));
+                return res.json(list);
+            }
+        }
+
+        // Fallback to JSON Filesystem
         const files = fs.readdirSync(QUIZ_DIR).filter(f => f.endsWith('.json'));
         const list = files.map(file => {
             try {
@@ -117,9 +134,16 @@ app.get('/api/quizzes', (req, res) => {
 });
 
 // Get detailed quiz by ID
-app.get('/api/quizzes/:id', (req, res) => {
+app.get('/api/quizzes/:id', async (req, res) => {
     try {
         const quizId = req.params.id;
+        // Try fetching from DB first
+        if (db.isDbConnected()) {
+            const quiz = await db.getQuizById(quizId);
+            if (quiz) return res.json(quiz);
+        }
+
+        // Fallback to JSON Filesystem
         const filePath = path.join(QUIZ_DIR, `${quizId}.json`);
         if (!fs.existsSync(filePath)) {
             return res.status(404).json({ error: 'ไม่พบชุดคำถามนี้ในระบบ' });
@@ -132,7 +156,7 @@ app.get('/api/quizzes/:id', (req, res) => {
 });
 
 // Save or Update a quiz to server repository
-app.post('/api/quizzes', (req, res) => {
+app.post('/api/quizzes', async (req, res) => {
     try {
         const quiz = req.body;
         if (!quiz || !quiz.title || !Array.isArray(quiz.questions)) {
@@ -144,6 +168,12 @@ app.post('/api/quizzes', (req, res) => {
         }
         quiz.updatedAt = new Date().toISOString();
 
+        // 1. Save to MS SQL Server DB (if connected)
+        if (db.isDbConnected()) {
+            await db.saveQuiz(quiz);
+        }
+
+        // 2. Also save to local JSON file as backup
         const filePath = path.join(QUIZ_DIR, `${quiz.id}.json`);
         fs.writeFileSync(filePath, JSON.stringify(quiz, null, 2), 'utf8');
 
@@ -155,17 +185,23 @@ app.post('/api/quizzes', (req, res) => {
 });
 
 // Delete quiz from server repository
-app.delete('/api/quizzes/:id', (req, res) => {
+app.delete('/api/quizzes/:id', async (req, res) => {
     try {
         const quizId = req.params.id;
+        
+        // 1. Delete from MS SQL Server DB (if connected)
+        if (db.isDbConnected()) {
+            await db.deleteQuiz(quizId);
+        }
+
+        // 2. Delete from local JSON file
         const filePath = path.join(QUIZ_DIR, `${quizId}.json`);
         if (fs.existsSync(filePath)) {
             fs.unlinkSync(filePath);
-            console.log(`[Quiz Deleted] ID: ${quizId}`);
-            res.json({ success: true });
-        } else {
-            res.status(404).json({ error: 'ไม่พบชุดคำถามที่ต้องการลบ' });
         }
+
+        console.log(`[Quiz Deleted] ID: ${quizId}`);
+        res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -659,10 +695,27 @@ module.exports.app = app;
 module.exports.server = server;
 
 if (require.main === module) {
+    // Initialize MS SQL Server Database
+    db.initDatabase().then((connected) => {
+        if (connected) {
+            // Sync default sample quizzes to DB if connected
+            const sampleFiles = ['quiz-sample-01.json', 'quiz-sample-02.json'];
+            sampleFiles.forEach(async (f) => {
+                const p = path.join(QUIZ_DIR, f);
+                if (fs.existsSync(p)) {
+                    try {
+                        const content = JSON.parse(fs.readFileSync(p, 'utf8'));
+                        await db.saveQuiz(content);
+                    } catch (e) {}
+                }
+            });
+        }
+    });
+
     // Start HTTP Server for local development
     server.listen(PORT, '0.0.0.0', () => {
         console.log(`===================================================`);
-        console.log(`🚀 KADARK KAHOOT-STYLE QUIZ SERVER RUNNING`);
+        console.log(`🚀 KadArk Kahoot-Style Quiz Server Running`);
         console.log(`📡 Local Network Access URL: ${SERVER_URL}`);
         console.log(`📱 Scan QR Code or open ${SERVER_URL}/player.html on mobile`);
         console.log(`===================================================`);

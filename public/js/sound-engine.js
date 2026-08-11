@@ -1,4 +1,4 @@
-// Web Audio API Sound Synthesizer for Kadark Quiz
+// Web Audio API Sound Synthesizer for KadArk Quiz
 
 class QuizSoundEngine {
     constructor() {

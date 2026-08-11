@@ -1,4 +1,4 @@
-# 🎮 KADARK - Kahoot-Style Interactive Multiplayer Quiz Platform
+# 🎮 KadArk - Kahoot-Style Interactive Multiplayer Quiz Platform
 
 ระบบควิซตอบคำถามมัลติเพลเยอร์เรียลไทม์สไตล์ Kahoot พร้อมสแกน QR Code เข้าเล่นผ่านมือถือ เลือก 20 ตัวละคร Avatar สดใส คิดคะแนนตามความเร็วสัมพัทธ์ เสียงเอฟเฟกต์ตื่นเต้น และระบบคลังชุดคำถามบนเซิร์ฟเวอร์
 
@@ -35,6 +35,29 @@ node server.js
 - **Host Screen (สำหรับเปิดขึ้นจอใหญ่)**: `http://localhost:3000/host.html`
 - **Player Screen (สำหรับผู้เล่นสแกน/กดเข้าเล่น)**: `http://localhost:3000/player.html`
 - **Quiz Editor (สำหรับสร้าง/แก้ไขชุดคำถาม)**: `http://localhost:3000/editor.html`
+
+### 4. รันผ่าน Docker / Docker Compose 🐳
+```bash
+# รันผ่าน Docker Compose (แนะนำ - คำสั่งเดียวจบ)
+docker compose up -d
+
+# หรือสร้าง Image และรันด้วย Docker CLI
+docker build -t kadark-quiz .
+docker run -d -p 3000:3000 --name kadark_app kadark-quiz
+```
+
+### 5. การตั้งค่าการเชื่อมต่อ MS SQL Server Database 🗄️
+ระบบรองรับการบันทึกข้อมูลคลังชุดคำถามลง **Microsoft SQL Server** (PEA Network DB) โดยตรงผ่านไฟล์ `.env`:
+
+```env
+DB_SERVER=c2webdb.pea.co.th
+DB_PORT=59156
+DB_USER=quizkadark
+DB_PASSWORD=quizkadark
+DB_NAME=quizkadark
+```
+- **การสร้างตารางอัตโนมัติ**: เมื่อเริ่มทำงาน ระบบจะสร้างตาราง `Quizzes` และ `Questions` บน SQL Server ให้อัตโนมัติ
+- **ระบบสำรองอัตโนมัติ (Fallback)**: หากเซิร์ฟเวอร์ไม่ได้ต่อเครือข่าย PEA หรือฐานข้อมูลขัดข้อง ระบบจะสลับไปใช้ไฟล์สำรอง JSON โดยอัตโนมัติโดยไม่ทำให้เกมหยุดชะงัก
 
 ---
 
