@@ -4,19 +4,20 @@ jspm_packages/
 web_modules/
 
 # Logs
-logs
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# Environment variables & secrets
+# Environment variables & secrets (Security Protection)
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+!.env.example
 
 # Operating System & IDE files
 .DS_Store
@@ -39,5 +40,4 @@ Thumbs.db
 .tmp/
 dist/
 build/
-.vercel
-
+.vercel/
